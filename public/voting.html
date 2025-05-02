@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Eurovision Voting</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+    }
+    
+    .voting-container {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .voter-name {
+      margin-bottom: 20px;
+    }
+    
+    .voter-name input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .top-10 {
+      margin-bottom: 20px;
+    }
+    
+    .top-10-item {
+      margin-bottom: 10px;
+    }
+    
+    .top-10-item h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    
+    .top-10-item select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .submit-button {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    .message-success {
+      color: green;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .message-error {
+      color: red;
+      text-align: center;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    @media screen and (max-width: 600px) {
+      .voter-name input,
+      .top-10-item select {
+        font-size: 14px;
+      }
+      
+      .top-10-item h3 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Jamie's Eurovision Party</h1>
+  
+  <div class="voting-container">
+    <div class="voter-name">
+      <input type="text" id="voterName" placeholder="Enter your name">
+    </div>
+    
+    <div class="top-10">
+      <h2>Top 10</h2>
+      <!-- Top 10 items will be dynamically generated here -->
+    </div>
+    
+    <button class="submit-button" onclick="submitVotes()">Submit Votes</button>
+    <div id="voteSuccessMessage" class="message-success" style="display: none;">Thank you! Your vote has been submitted.</div>
+    <div id="voteErrorMessage" class="message-error" style="display: none;">Please make sure all selections are made before submitting.</div>
+  </div>
+  
+  <script>
+    const songs = [
+      { id: 1, country: 'Sweden', artist: 'Marcus & Martinus', title: 'Unforgettable', emoji: '🇸🇪' },
+      { id: 2, country: 'Netherlands', artist: 'Joost Klein', title: 'Europapa', emoji: '🇳🇱' },
+      { id: 3, country: 'Czechia', artist: 'Aiko', title: 'Pedestal', emoji: '🇨🇿' },
+      { id: 4, country: 'Australia', artist: 'Electric Fields', title: 'One Milkali (One Blood)', emoji: '🇦🇺' },
+      { id: 5, country: 'Finland', artist: 'Windows95man', title: 'No Rules!', emoji: '🇫🇮' },
+      { id: 6, country: 'France', artist: 'Slimane', title: 'Mon amour', emoji: '🇫🇷' },
+      { id: 7, country: 'Austria', artist: 'Kaleen', title: 'We Will Rave', emoji: '🇦🇹' },
+      { id: 8, country: 'Ireland', artist: 'Bambie Thug', title: 'Doomsday Blue', emoji: '🇮🇪' },
+      { id: 9, country: 'Norway', artist: 'Gåte', title: 'Ulveham', emoji: '🇳🇴' },
+      { id: 10, country: 'Croatia', artist: 'Baby Lasagna', title: 'Rim Tim Tagi Dim', emoji: '🇭🇷' },
+      { id: 11, country: 'Ukraine', artist: 'Alyona Alyona & Jerry Heil', title: 'Teresa & Maria', emoji: '🇺🇦' },
+      { id: 12, country: 'Switzerland', artist: 'Nemo', title: 'The Code', emoji: '🇨🇭' },
+      { id: 13, country: 'Spain', artist: 'Nebulossa', title: 'ZORRA', emoji: '🇪🇸' },
+      { id: 14, country: 'Lithuania', artist: 'Silvester Belt', title: 'Luktelk', emoji: '🇱🇹' },
+      { id: 15, country: 'Portugal', artist: 'iolanda', title: 'Grito', emoji: '🇵🇹' },
+      { id: 16, country: 'Belgium', artist: 'Mustii', title: "Before The Party's Over", emoji: '🇧🇪' },
+      { id: 17, country: 'Luxembourg', artist: 'Tali', title: 'Fighter', emoji: '🇱🇺' },
+      { id: 18, country: 'Germany', artist: 'ISAAK', title: 'Always on the Run', emoji: '🇩🇪' },
+      { id: 19, country: 'Greece', artist: 'Marina Satti', title: 'ZARI', emoji: '🇬🇷' },
+      { id: 20, country: 'Georgia', artist: 'Nutsa Buzaladze', title: 'Firefighter', emoji: '🇬🇪' },
+      { id: 21, country: 'Italy', artist: 'Angelina Mango', title: 'La Noia', emoji: '🇮🇹' },
+      { id: 22, country: 'United Kingdom', artist: 'Olly Alexander', title: 'Dizzy', emoji: '🇬🇧' }
+    ];
+    
+    const top10 = Array(10).fill(null);
+    const points = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
+    
+    function renderTop10() {
+      const top10List = document.querySelector('.top-10');
+      top10List.innerHTML = '';
+      
+      top10.forEach((song, index) => {
+        const top10Item = document.createElement('div');
+        top10Item.classList.add('top-10-item');
+        
+        const heading = document.createElement('h3');
+        heading.textContent = `${points[index]} points`;
+        top10Item.appendChild(heading);
+        
+        const select = document.createElement('select');
+        select.addEventListener('change', () => selectSong(index, select.value));
+        
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select song';
+        select.appendChild(defaultOption);
+        
+        songs.forEach(song => {
+          const option = document.createElement('option');
+          option.value = song.id;
+          option.textContent = `${song.id}. ${song.emoji} ${song.country} - ${song.artist} - "${song.title}"`;
+          
+          if (top10.includes(song)) {
+            option.disabled = true;
+            option.textContent += ' (Selected)';
+          }
+          
+          if (top10[index] && top10[index].id === song.id) {
+            option.selected = true;
+          }
+          
+          select.appendChild(option);
+        });
+        
+        top10Item.appendChild(select);
+        top10List.appendChild(top10Item);
+      });
+    }
+    
+    function selectSong(index, songId) {
+      const song = songs.find(s => s.id === parseInt(songId));
+      top10[index] = song;
+      renderTop10();
+    }
+    
+    function submitVotes() {
+      const voterName = document.getElementById('voterName').value.trim();
+      if (voterName === '') {
+        alert('Please enter your name before submitting the votes.');
+        return;
+      }
+      
+      if (top10.includes(null)) {
+        document.getElementById('voteErrorMessage').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('voteErrorMessage').style.display = 'none';
+        }, 3000);
+        return;
+      }
+      
+      const votes = top10.map((song, index) => ({
+        songId: song.id,
+        points: points[index]
+      }));
+      
+      fetch('/api/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ voterName, votes })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('voteSuccessMessage').style.display = 'block';
+        document.querySelector('.submit-button').disabled = true;
+        document.querySelectorAll('select').forEach(elem => elem.disabled = true);
+        document.querySelector('.voter-name input').disabled = true;
+      })
+      .catch(error => {
+        console.error('Error submitting votes:', error);
+      });
+    }
+    
+    renderTop10();
+  </script>
+</body>
+</html>

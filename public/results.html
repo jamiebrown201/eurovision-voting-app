@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Eurovision Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    
+    .result {
+      opacity: 0;
+      transform: translateX(-100%);
+      transition: opacity 0.5s, transform 0.5s;
+      margin-top: 10px; /* Space between entries */
+      background-color: white;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-left: 5px solid #ccc;
+      color: #333;
+      font-size: 16px; /* Consistent font size */
+    }
+    
+    .result.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .last-place {
+      transform: translateY(100px) translateX(-100%); /* Start from below */
+      transition: opacity 0.5s, transform 0.5s 0.5s; /* Delayed transform */
+    }
+
+    .placement {
+      font-size: 18px; /* Larger font size for placement */
+      font-weight: bold; /* Bold for emphasis */
+      color: #007BFF; /* Stylish blue for better visibility */
+    }
+  </style>
+</head>
+<body>
+  <h1>Jamie's Eurovision Preview Party Results</h1>
+  <div id="results"></div>
+
+  <script>
+    const songs = [
+      { id: 1, country: 'Sweden', artist: 'Marcus & Martinus', title: 'Unforgettable', emoji: '🇸🇪' },
+      { id: 2, country: 'Netherlands', artist: 'Joost Klein', title: 'Europapa', emoji: '🇳🇱' },
+      { id: 3, country: 'Czechia', artist: 'Aiko', title: 'Pedestal', emoji: '🇨🇿' },
+      { id: 4, country: 'Australia', artist: 'Electric Fields', title: 'One Milkali (One Blood)', emoji: '🇦🇺' },
+      { id: 5, country: 'Finland', artist: 'Windows95man', title: 'No Rules!', emoji: '🇫🇮' },
+      { id: 6, country: 'France', artist: 'Slimane', title: 'Mon amour', emoji: '🇫🇷' },
+      { id: 7, country: 'Austria', artist: 'Kaleen', title: 'We Will Rave', emoji: '🇦🇹' },
+      { id: 8, country: 'Ireland', artist: 'Bambie Thug', title: 'Doomsday Blue', emoji: '🇮🇪' },
+      { id: 9, country: 'Norway', artist: 'Gåte', title: 'Ulveham', emoji: '🇳🇴' },
+      { id: 10, country: 'Croatia', artist: 'Baby Lasagna', title: 'Rim Tim Tagi Dim', emoji: '🇭🇷' },
+      { id: 11, country: 'Ukraine', artist: 'Alyona Alyona & Jerry Heil', title: 'Teresa & Maria', emoji: '🇺🇦' },
+      { id: 12, country: 'Switzerland', artist: 'Nemo', title: 'The Code', emoji: '🇨🇭' },
+      { id: 13, country: 'Spain', artist: 'Nebulossa', title: 'ZORRA', emoji: '🇪🇸' },
+      { id: 14, country: 'Lithuania', artist: 'Silvester Belt', title: 'Luktelk', emoji: '🇱🇹' },
+      { id: 15, country: 'Portugal', artist: 'iolanda', title: 'Grito', emoji: '🇵🇹' },
+      { id: 16, country: 'Belgium', artist: 'Mustii', title: "Before The Party's Over", emoji: '🇧🇪' },
+      { id: 17, country: 'Luxembourg', artist: 'Tali', title: 'Fighter', emoji: '🇱🇺' },
+      { id: 18, country: 'Germany', artist: 'ISAAK', title: 'Always on the Run', emoji: '🇩🇪' },
+      { id: 19, country: 'Greece', artist: 'Marina Satti', title: 'ZARI', emoji: '🇬🇷' },
+      { id: 20, country: 'Georgia', artist: 'Nutsa Buzaladze', title: 'Firefighter', emoji: '🇬🇪' },
+      { id: 21, country: 'Italy', artist: 'Angelina Mango', title: 'La Noia', emoji: '🇮🇹' },
+      { id: 22, country: 'United Kingdom', artist: 'Olly Alexander', title: 'Dizzy', emoji: '🇬🇧' }
+    ];
+
+    let sortedResults = [];
+    let currentIndex = 0;
+    let resultDataReceived = false;
+
+    fetch('/api/results')
+      .then(response => response.json())
+      .then(data => {
+        const results = data.results;
+        songs.forEach(song => {
+          if (results.hasOwnProperty(song.id.toString())) {
+            sortedResults.push({
+              ...song,
+              points: results[song.id.toString()]
+            });
+          } else {
+            // Include songs with zero points
+            sortedResults.push({
+              ...song,
+              points: 0
+            });
+          }
+        });
+        // Sort results by points ascending for display from lowest to highest
+        sortedResults.sort((a, b) => a.points - b.points);
+        resultDataReceived = true; // Flag that results are ready
+      })
+      .catch(error => {
+        console.error('Error retrieving results:', error);
+      });
+
+    document.addEventListener('keydown', event => {
+      if (event.code === 'Space' && resultDataReceived) {
+        event.preventDefault(); // Prevent default scrolling behavior
+        renderNextResult();
+      }
+    });
+
+    function renderNextResult() {
+      if (currentIndex >= sortedResults.length) {
+        return; // Stop if no more results to show
+      }
+
+      const result = sortedResults[currentIndex];
+      const resultElement = document.createElement('div');
+      resultElement.classList.add('result');
+      if (currentIndex === 0) {
+        resultElement.classList.add('last-place'); // Special style for last place
+      }
+      resultElement.innerHTML = `<p class="placement">Place ${sortedResults.length - currentIndex}: ${result.emoji} ${result.country} - ${result.artist} - "${result.title}"</p>
+                                 <p>Points: <span class="points">${result.points}</span></p>`;
+      
+      // Prepend the new result to the top of the results container
+      const resultsContainer = document.getElementById('results');
+      resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+
+      setTimeout(() => {
+        resultElement.classList.add('show');
+      }, 100);
+
+      // Scroll to the top of the document to keep the view focused on new entries
+      window.scrollTo(0, 0);
+
+      currentIndex++;
+    }
+  </script>
+</body>
+</html>
